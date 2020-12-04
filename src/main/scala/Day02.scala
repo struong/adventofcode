@@ -1,21 +1,25 @@
 object Day02 extends App {
-  val input = io.Source.fromResource("Day01").getLines().toList.map(_.toInt)
-  val inputSet = input.toSet
-
-
-  def check(input: List[Int], target: Int): List[Int] = {
-    input match {
-      case Nil => Nil
-      case x :: tail =>
-        tail.flatMap {
-          case element if (element + x) == target =>
-            List(element, x)
-          case _ => Nil
-        } ++ check(tail, target)
+  final case class Policy(min: Int, max: Int, letter: Char, password: String) {
+    def isValid: Boolean = {
+      val letterCount = password.filter(_ == letter).size
+      letterCount >= min && letterCount <= max
     }
   }
 
+  val input: Seq[String] = io.Source.fromResource("Day02").getLines().toList
 
+  def createPolicy(line: String): Policy = {
+    val lineRegex = raw"(\d+)-(\d+) ([a-z]): (.*)".r
 
-  println(check(input, 2020))
+    line match {
+      case lineRegex(min, max, letter, password) =>
+        Policy(min.toInt, max.toInt, letter.charAt(0), password)
+    }
+  }
+
+  def createPolicies(input: Seq[String]): Seq[Policy] = {
+    input.map( x => createPolicy(x))
+  }
+
+  println(createPolicies(input).filter(x => x.isValid).size)
 }
