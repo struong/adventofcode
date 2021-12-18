@@ -20,7 +20,22 @@ class Day03Spec extends AnyFunSuite with Matchers {
   )
 
   test("calculate power consumption") {
-    val diagnostics = Diagnostics(BitCounter.make(input))
+    val diagnostics = Diagnostics(
+      Helper.makeGamma(input),
+      Helper.makeOxygen(input),
+      BitCounter(Seq.empty[Int])
+    )
     diagnostics.powerConsumption shouldBe 198
+  }
+
+  test("calculate oxygen rating") {
+    val diagnostics = Diagnostics(
+      Helper.makeGamma(input),
+      Helper.makeOxygen(input),
+      Helper.makeCO2(input)
+    )
+
+    println(s"diagnostics = ${diagnostics}")
+    diagnostics.lifeSupportRating shouldBe 230
   }
 }

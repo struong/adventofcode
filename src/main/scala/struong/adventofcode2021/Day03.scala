@@ -1,14 +1,22 @@
 package struong.adventofcode2021
 
-final case class Diagnostics(gammaRate: BitCounter) {
+import scala.annotation.tailrec
+
+final case class Diagnostics(
+    gammaRate: BitCounter,
+    oxygen: BitCounter,
+    co2: BitCounter
+) {
 
   private def flip(x: Int) = x ^ (1 << 0)
-  def epsilonRate =
+  private def inverse(bitCounter: BitCounter) =
     BitCounter(
-      gammaRate.line.map(x => flip(x))
+      bitCounter.line.map(x => flip(x))
     )
 
-  def powerConsumption: Int = gammaRate.asDecimal * epsilonRate.asDecimal
+  def powerConsumption: Int = gammaRate.asDecimal * inverse(gammaRate).asDecimal
+
+  def lifeSupportRating: Int = oxygen.asDecimal * co2.asDecimal
 }
 
 final case class BitCounter(
@@ -20,7 +28,7 @@ final case class BitCounter(
   }
 }
 
-object BitCounter {
+object Helper {
   def parse(input: Seq[String]): Seq[Seq[Int]] = {
     input.map { in =>
       in.toList.map(_.asDigit)
@@ -32,21 +40,67 @@ object BitCounter {
     if (sum > halfSize) 1 else 0
   }
 
-  def make(input: Seq[String]): BitCounter = {
-
-    val parsedInput = parse(input)
-
+  private def accumulate(input: Seq[Seq[Int]]): Seq[Int] = {
     val emptyLine = Seq.fill(input.head.size)(0)
 
-    val accum = parsedInput.foldLeft(emptyLine) {
-      case (current, acc) =>
-        current.lazyZip(acc).map(_ + _)
+    input.foldLeft(emptyLine) {
+      case (l, r) =>
+        l.lazyZip(r).map(_ + _)
+    }
+  }
+
+  private def cleanse(
+      input: Seq[Seq[Int]],
+      keeps: (Seq[Seq[Int]], Int) => Boolean
+  ): Seq[Seq[Int]] = {
+    val maxIndex = input.head.size
+
+    @tailrec
+    def append(in: Seq[Seq[Int]], index: Int): Seq[Seq[Int]] = {
+      index match {
+        case index if in.size == 1 || index == maxIndex => in
+        case _ =>
+          val keep = keeps(in, index)
+          val newInput = if (keep) {
+            in.filter(x => x(index) == 1)
+          } else {
+            in.filter(x => x(index) == 0)
+          }
+          append(newInput, index + 1)
+      }
     }
 
-    val bits = accum.map(x => getBit(x, input))
-
-    BitCounter(bits)
+    append(input, 0)
   }
+
+  def makeOxygen(input: Seq[String]): BitCounter = {
+    val parsedInput = parse(input)
+    def keepOnes(in: Seq[Seq[Int]], index: Int): Boolean = {
+      accumulate(in)(index) >= (in.size / 2.0)
+    }
+
+    BitCounter(cleanse(parsedInput, keepOnes).flatten)
+  }
+
+  def makeCO2(input: Seq[String]): BitCounter = {
+    val parsedInput = parse(input)
+    def keepZeroes(in: Seq[Seq[Int]], index: Int): Boolean = {
+      accumulate(in)(index) < (in.size / 2.0)
+    }
+
+    BitCounter(cleanse(parsedInput, keepZeroes).flatten)
+  }
+
+  def makeGamma(input: Seq[String]): BitCounter = {
+    val parsedInput = parse(input)
+
+    val accum = accumulate(parsedInput)
+
+    val gamma = accum.map(x => getBit(x, input))
+
+    BitCounter(gamma)
+  }
+
 }
 
 object Day03 {
@@ -57,7 +111,13 @@ object Day03 {
       .getLines()
       .toSeq
 
-    val diagnostics = Diagnostics(BitCounter.make(input))
+    val diagnostics = Diagnostics(
+      Helper.makeGamma(input),
+      Helper.makeOxygen(input),
+      Helper.makeCO2(input)
+    )
+
     println(diagnostics.powerConsumption)
+    println(s"diagnostics.lifeSupportRating = ${diagnostics.lifeSupportRating}")
   }
 }
