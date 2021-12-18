@@ -19,17 +19,8 @@ final case class Diagnostics(
   def lifeSupportRating: Int = oxygen.asDecimal * co2.asDecimal
 }
 
-final case class BitCounter(
-    line: Seq[Int]
-) {
-  def asDecimal: Int = {
-    val binary = line.mkString
-    Integer.parseInt(binary, 2)
-  }
-}
-
-object Helper {
-  def parse(input: Seq[String]): Seq[Seq[Int]] = {
+object Diagnostics {
+  private def parse(input: Seq[String]): Seq[Seq[Int]] = {
     input.map { in =>
       in.toList.map(_.asDigit)
     }
@@ -73,34 +64,35 @@ object Helper {
     append(input, 0)
   }
 
-  def makeOxygen(input: Seq[String]): BitCounter = {
-    val parsedInput = parse(input)
-    def keepOnes(in: Seq[Seq[Int]], index: Int): Boolean = {
-      accumulate(in)(index) >= (in.size / 2.0)
-    }
-
-    BitCounter(cleanse(parsedInput, keepOnes).flatten)
+  def keepOnes(in: Seq[Seq[Int]], index: Int): Boolean = {
+    accumulate(in)(index) >= (in.size / 2.0)
   }
 
-  def makeCO2(input: Seq[String]): BitCounter = {
-    val parsedInput = parse(input)
-    def keepZeroes(in: Seq[Seq[Int]], index: Int): Boolean = {
-      accumulate(in)(index) < (in.size / 2.0)
-    }
-
-    BitCounter(cleanse(parsedInput, keepZeroes).flatten)
+  def keepZeroes(in: Seq[Seq[Int]], index: Int): Boolean = {
+    accumulate(in)(index) < (in.size / 2.0)
   }
-
-  def makeGamma(input: Seq[String]): BitCounter = {
+  def apply(input: Seq[String]): Diagnostics = {
     val parsedInput = parse(input)
-
     val accum = accumulate(parsedInput)
 
     val gamma = accum.map(x => getBit(x, input))
 
-    BitCounter(gamma)
-  }
+    Diagnostics(
+      BitCounter(gamma),
+      BitCounter(cleanse(parsedInput, keepOnes).flatten),
+      BitCounter(cleanse(parsedInput, keepZeroes).flatten)
+    )
 
+  }
+}
+
+final case class BitCounter(
+    line: Seq[Int]
+) {
+  def asDecimal: Int = {
+    val binary = line.mkString
+    Integer.parseInt(binary, 2)
+  }
 }
 
 object Day03 {
@@ -111,13 +103,9 @@ object Day03 {
       .getLines()
       .toSeq
 
-    val diagnostics = Diagnostics(
-      Helper.makeGamma(input),
-      Helper.makeOxygen(input),
-      Helper.makeCO2(input)
-    )
+    val diagnostics = Diagnostics(input)
 
-    println(diagnostics.powerConsumption)
+    println(s"diagnostics.powerConsumption = ${diagnostics.powerConsumption}")
     println(s"diagnostics.lifeSupportRating = ${diagnostics.lifeSupportRating}")
   }
 }
