@@ -1,3 +1,5 @@
+package struong.adventofcode2020
+
 object Day02 extends App {
   final case class Policy(min: Int, max: Int, letter: Char, password: String) {
     def isValid: Boolean = {
@@ -18,7 +20,7 @@ object Day02 extends App {
   }
 
   def createPolicies(input: Seq[String]): Seq[Policy] = {
-    input.map( x => createPolicy(x))
+    input.map(x => createPolicy(x))
   }
 
   println(createPolicies(input).filter(x => x.isValid).size)

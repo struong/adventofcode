@@ -1,4 +1,6 @@
-object Day01I extends App {
+package struong.adventofcode2020
+
+object Day01 extends App {
   val input = io.Source.fromResource("Day01").getLines().toList.map(_.toInt)
 
   def check(input: List[Int]): List[Int] = {
@@ -6,10 +8,10 @@ object Day01I extends App {
       case Nil => Nil
       case x :: tail =>
         tail.flatMap {
-        case element if (element + x) == 2020 =>
-          List(element, x)
-        case _ => Nil
-      } ++ check(tail)
+          case element if (element + x) == 2020 =>
+            List(element, x)
+          case _ => Nil
+        } ++ check(tail)
     }
   }
 
@@ -32,11 +34,11 @@ object Day01II extends App {
   val input = io.Source.fromResource("Day01").getLines().toList.map(_.toInt)
 
   def bruteForce(input: List[Int]): Unit = {
-    for(i <- 0 to input.length - 1) {
-      for(j <- 1 to input.length - 1) {
-        for(k <- 2 to input.length - 1) {
-          val total = input(i) + input(j)+ input(k)
-          if(total == 2020) {
+    for (i <- 0 to input.length - 1) {
+      for (j <- 1 to input.length - 1) {
+        for (k <- 2 to input.length - 1) {
+          val total = input(i) + input(j) + input(k)
+          if (total == 2020) {
             println(s"i = ${input(i)}")
             println(s"j = ${input(j)}")
             println(s"k = ${input(k)}")
@@ -67,4 +69,3 @@ object Day01II extends App {
   go(input, inputSet)
 
 }
-
