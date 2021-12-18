@@ -1,6 +1,6 @@
 package struong.adventofcode2021
 
-case class Position(horizontal: Int, depth: Int, aim: Int) {
+final case class Position(horizontal: Int, depth: Int, aim: Int) {
   def moveUp(matched: String): Position =
     Position(horizontal, depth, aim - matched.toInt)
 
