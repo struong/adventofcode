@@ -26,8 +26,6 @@ class Day03Spec extends AnyFunSuite with Matchers {
 
   test("calculate oxygen rating") {
     val diagnostics = Diagnostics(input)
-
-    println(s"diagnostics = ${diagnostics}")
     diagnostics.lifeSupportRating shouldBe 230
   }
 }
