@@ -1,5 +1,7 @@
 package struong.adventofcode2021
 
+import scala.annotation.tailrec
+
 final case class Grid(
     rows: Seq[Set[Int]],
     columns: Seq[Set[Int]],
@@ -9,6 +11,30 @@ final case class Grid(
   def score: Option[Int] = lastWinner.map(_ * rows.map(_.sum).sum)
 }
 final case class BingoBoard(numbersCalled: Seq[Int], grids: Seq[Grid]) {
+
+  def lastWinner: Option[Grid] = {
+    val winningGrids = findWinners
+
+    val winners = winningGrids
+      .flatMap {
+        case grid =>
+          grid.lastWinner.map(winningNumber =>
+            numbersCalled.indexOf(winningNumber)
+          )
+      }
+      .sorted
+      .reverse
+
+    if (winners.isEmpty) {
+      None
+    } else {
+      val firstWinningNumber = numbersCalled(winners.head)
+      winningGrids
+        .filter(_.lastWinner.contains(firstWinningNumber))
+        .headOption
+    }
+  }
+
   def firstWinner: Option[Grid] = {
     val winningGrids = findWinners
 
@@ -19,49 +45,53 @@ final case class BingoBoard(numbersCalled: Seq[Int], grids: Seq[Grid]) {
         )
     }.sorted
 
-    println(s"winners = ${winners}")
-
     if (winners.isEmpty) {
       None
     } else {
       val firstWinningNumber = numbersCalled(winners.head)
-      println(s"firstWinningNumber = ${firstWinningNumber}")
-      val x = winningGrids
+      winningGrids
         .filter(_.lastWinner.contains(firstWinningNumber))
         .headOption
-      println(s"x = ${x}")
-      x
     }
   }
 
   private def findWinners: Seq[Grid] = {
-    grids.flatMap { grid =>
-      numbersCalled
-        .scanLeft(grid) {
-          case (g, number) =>
-            // find and drop numbers
-            val newRows = g.rows.map(_ - number)
-            val newCols = g.columns.map(_ - number)
+    def findWinner(grid: Grid): Option[Grid] = {
+      @tailrec
+      def lookThroughGrid(
+          previous: Grid,
+          numbersLeft: Seq[Int],
+          winner: Boolean
+      ): Option[Grid] = {
+        if (numbersLeft.isEmpty) {
+          None
+        } else if (winner) {
+          Some(previous)
+        } else {
+          val number = numbersLeft.head
+          val newRows = previous.rows.map(_ - number)
+          val newCols = previous.columns.map(_ - number)
 
-            // find winners
-            val lastWinner =
-              if (
-                newRows
-                  .exists(_.isEmpty) || newCols.exists(_.isEmpty)
-              ) {
-                Some(number)
-              } else {
-                None
-              }
+          // find winners
+          val lastWinner =
+            if (
+              newRows
+                .exists(_.isEmpty) || newCols.exists(_.isEmpty)
+            ) {
+              Some(number)
+            } else {
+              None
+            }
 
-//            println(s"number = ${number}")
-//            println(s"newRows = ${newRows}")
-//            println(s"newCols = ${newCols}")
-//            println(s"lastWinner = ${lastWinner}")
-
-            Grid(newRows, newCols, g.gridNumber, lastWinner)
+          val current = Grid(newRows, newCols, previous.gridNumber, lastWinner)
+          lookThroughGrid(current, numbersLeft.drop(1), lastWinner.isDefined)
         }
+      }
+
+      lookThroughGrid(grid, numbersCalled, false)
     }
+
+    grids.flatMap(findWinner)
   }
 }
 
@@ -98,7 +128,9 @@ object Day04 {
 
     val bingoBoard = parse(input)
 
-    val score = bingoBoard.firstWinner.map(_.score)
-    println(s"score = ${score}")
+    val scoreFirst = bingoBoard.firstWinner.map(_.score)
+    val scoreLast = bingoBoard.lastWinner.map(_.score)
+    println(s"scoreFirst = ${scoreFirst}")
+    println(s"scoreLast = ${scoreLast}")
   }
 }
