@@ -4,6 +4,7 @@ import scala.annotation.tailrec
 
 object Lanternfish {
 
+  @tailrec
   def generation(
       day: Int,
       until: Int,
