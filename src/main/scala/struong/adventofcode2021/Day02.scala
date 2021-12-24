@@ -1,17 +1,18 @@
 package struong.adventofcode2021
 
-final case class Position(horizontal: Int, depth: Int, aim: Int) {
-  def moveUp(matched: String): Position =
-    Position(horizontal, depth, aim - matched.toInt)
-
-  def moveDown(matched: String): Position =
-    Position(horizontal, depth, aim + matched.toInt)
-
-  def moveForward(matched: String): Position =
-    Position(horizontal + matched.toInt, depth + (matched.toInt * aim), aim)
-}
 
 object Day02 {
+  final case class Position(horizontal: Int, depth: Int, aim: Int) {
+    def moveUp(matched: String): Position =
+      Position(horizontal, depth, aim - matched.toInt)
+
+    def moveDown(matched: String): Position =
+      Position(horizontal, depth, aim + matched.toInt)
+
+    def moveForward(matched: String): Position =
+      Position(horizontal + matched.toInt, depth + (matched.toInt * aim), aim)
+  }
+
   def main(args: Array[String]): Unit = {
     lazy val input = io.Source
       .fromInputStream(getClass.getResourceAsStream("Day02.txt"))

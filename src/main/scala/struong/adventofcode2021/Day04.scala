@@ -10,6 +10,7 @@ final case class Grid(
 ) {
   def score: Option[Int] = lastWinner.map(_ * rows.map(_.sum).sum)
 }
+
 final case class BingoBoard(numbersCalled: Seq[Int], grids: Seq[Grid]) {
 
   def lastWinner: Option[Grid] = {
