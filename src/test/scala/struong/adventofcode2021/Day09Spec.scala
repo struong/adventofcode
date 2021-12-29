@@ -15,7 +15,16 @@ class Day09Spec extends AnyFunSuite with Matchers {
   test("lowest points") {
     val input = Day09.parse
 
-    LavaTubes.heightmap(input) shouldBe 15
+    LavaTubes.heightMapSum(input) shouldBe 15
   }
 
+  test("basin size") {
+    val input = Day09.parse
+    val lowPoints = LavaTubes.lowPoints(LavaTubes.heightmap(input))
+
+    val scores = lowPoints.map(point => LavaTubes.basin(Seq(point), Set.empty, input, 0))
+    val topScores = scores.sorted(Ordering.Int.reverse).take(3).product
+
+    topScores shouldBe 1134
+  }
 }
