@@ -7,6 +7,10 @@ object Utils {
     Files[F].readUtf8Lines(Path(path))
   }
 
+  implicit class ArrayOps[A](val array: Array[Array[A]]) {
+    def prettyPrint(): Unit = array.map(_.mkString(" ")).foreach(println)
+
+  }
   implicit class MatrixOps[A](val array: Seq[Seq[A]]) {
     def at(i: Int, j: Int): Option[A] = {
       array.lift(i).flatMap(_.lift(j))

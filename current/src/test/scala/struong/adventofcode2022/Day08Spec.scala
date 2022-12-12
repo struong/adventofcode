@@ -2,8 +2,7 @@ package struong.adventofcode2022
 
 import fs2.text
 import munit.CatsEffectSuite
-
-import scala.annotation.tailrec
+import struong.adventofcode2022.Day08.{visibleInnerTrees, visibleTrees}
 
 class Day08Spec extends CatsEffectSuite {
   val input: String =
@@ -34,29 +33,6 @@ class Day08Spec extends CatsEffectSuite {
     assertEquals(parse, expected)
   }
 
-  def innerRow[A](row: List[A]): List[A] = row.drop(1).dropRight(1)
-
-  def visibleInnerTrees(row: List[Int]): List[Boolean] = {
-    @tailrec
-    def go(
-        visibleTrees: List[Boolean],
-        index: Int
-    ): List[Boolean] = {
-      if (index == row.length) {
-        visibleTrees
-      } else {
-        if (visibleTrees(index - 1) == true) {
-          val currentTree = row(index)
-          go(visibleTrees :+ (currentTree > row(index - 1)), index + 1)
-        } else {
-          go(visibleTrees :+ false, index + 1)
-        }
-      }
-    }
-
-    innerRow(go(List(true), 1))
-  }
-
   test("visible trees in row") {
     val row = List(2, 5, 5, 1, 2)
     val expected = List(true, false, false)
@@ -66,7 +42,7 @@ class Day08Spec extends CatsEffectSuite {
 
   test("visible trees in reversed row") {
     val row = List(2, 5, 5, 1, 2).reverse
-    val expected = List(false, false, false)
+    val expected = List(false, true, false)
 
     assertEquals(visibleInnerTrees(row), expected)
   }
@@ -80,55 +56,6 @@ class Day08Spec extends CatsEffectSuite {
       List(3, 5, 3, 9, 0)
     )
 
-    def trees(input: List[List[Int]]): List[List[Boolean]] = {
-      input.map(visibleInnerTrees)
-    }
-
-    val leftToRight = innerRow(trees(input))
-    val rightToLeft = innerRow(trees(input.map(_.reverse)).map(_.reverse))
-    val topToBottom = innerRow(trees(input.transpose))
-    val bottomToTop = innerRow(trees(input.transpose(_.reverse)).map(_.reverse))
-
-//    println(s"leftToRight = ${leftToRight}")
-//    println(s"rightToLeft = ${rightToLeft}")
-
-    println(s"topToBottom = ${topToBottom}")
-    println(s"bottomToTop = ${bottomToTop}")
-
-    val columns = topToBottom
-      .zip(bottomToTop)
-      .map { case (x, y) =>
-        x.zip(y)
-          .map { case (l, r) =>
-            l || r
-          }
-      }
-
-    println(s"columns = ${columns}")
-
-    val rows =
-      leftToRight
-        .zip(rightToLeft)
-        .map { case (x, y) =>
-          x.zip(y)
-            .map { case (l, r) =>
-              l || r
-            }
-        }
-
-    val grid: Array[Array[Boolean]] = Array.fill(3, 3)(true)
-
-    for (i <- 0 until grid.length) {
-      for (j <- 0 until grid.length) {
-        val rowValue = rows(i)(j)
-        val columnValue = columns(j)(i)
-        grid(i)(j) = rowValue || columnValue
-      }
-    }
-
-    println(s"grid = ${grid.toString}")
-
-    assertEquals(1, 21)
-
+    assertEquals(visibleTrees(input), 21)
   }
 }
