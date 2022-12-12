@@ -57,6 +57,69 @@ object Day08 extends IOApp.Simple {
         }
     }
 
+  def viewingDistance(index: Int, input: Array[Int]): Int = {
+    if (index == 0) {
+      1
+    } else {
+      // Stop if you reach an edge or at the first tree that is the same height or taller than the tree under consideration.
+      val currentTree = input(index)
+
+      @tailrec
+      def go(lowerTrees: Int, trees: Array[Int]): Int = {
+        if (trees.isEmpty) {
+          lowerTrees
+        } else {
+          if(currentTree <= trees.last) {
+            lowerTrees + 1
+          } else {
+            go(lowerTrees + 1, trees.dropRight(1))
+          }
+        }
+      }
+
+      val treesInBetween = input.slice(0, index)
+      go(0, treesInBetween)
+    }
+  }
+
+  def highestTrees(input: List[List[Int]]): Int = {
+    val grid = input.map(_.toArray).toArray
+
+    val height = input.length
+    val width = input.head.length
+
+    var highestTree = 0
+
+    for (i <- 1 until width - 1) {
+      for (j <- 1 until height - 1) {
+        val row = grid(i)
+        val column = grid.transpose.apply(j)
+        // count the number of taller trees going up
+
+        println(s"i = ${i}")
+        println(s"j = ${j}")
+        
+        println(s"row = ${row.mkString("Array(", ", ", ")")}")
+        println(s"column = ${column.mkString("Array(", ", ", ")")}")
+
+        val up = viewingDistance(j, column)
+        val down = viewingDistance(j, column.reverse)
+        val left = viewingDistance(i, row)
+        val right = viewingDistance(i, row.reverse)
+
+        println(s"up = ${up}")
+        println(s"down = ${down}")
+        println(s"left = ${left}")
+        println(s"down = ${down}")
+
+        val calcHeights = up * down * left * right
+        highestTree = highestTree.max(calcHeights)
+      }
+    }
+
+    highestTree
+  }
+
   def visibleTrees(input: List[List[Int]]): Int = {
     val leftToRight = innerRow(trees(input))
     val rightToLeft = innerRow(trees(input.map(_.reverse)).map(_.reverse))
