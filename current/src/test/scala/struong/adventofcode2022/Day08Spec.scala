@@ -2,7 +2,12 @@ package struong.adventofcode2022
 
 import fs2.text
 import munit.CatsEffectSuite
-import struong.adventofcode2022.Day08.{highestTrees, viewingDistance, visibleInnerTrees, visibleTrees}
+import struong.adventofcode2022.Day08.{
+  highestTrees,
+  viewingDistance,
+  visibleInnerTrees,
+  visibleTrees
+}
 
 class Day08Spec extends CatsEffectSuite {
   val inputString: String =
@@ -60,16 +65,34 @@ class Day08Spec extends CatsEffectSuite {
     assertEquals(lookRight, 2)
   }
 
-  test("highest visible tree in a column ") {
+  test("highest visible tree in a column") {
     val column = Array(3, 5, 3, 5, 3)
     val lookUp = viewingDistance(1, column)
-    val lookDown = viewingDistance(1, column.reverse)
+    val lookDown = viewingDistance(3, column.reverse)
 
     assertEquals(lookUp, 1)
-    assertEquals(lookUp, 3)
+    assertEquals(lookDown, 2)
   }
 
-  test("highest visible trees from example".ignore) {
+  test("highest example row") {
+    val row = Array(3, 3, 5, 4, 9)
+    val lookLeft = viewingDistance(2, row)
+    val lookRight = viewingDistance(2, row.reverse)
+
+    assertEquals(lookLeft, 2)
+    assertEquals(lookRight, 2)
+  }
+
+  test("highest example column") {
+    val column = Array(3, 5, 3, 5, 3)
+    val lookUp = viewingDistance(3, column)
+    val lookDown = viewingDistance(1, column.reverse)
+
+    assertEquals(lookUp, 2)
+    assertEquals(lookDown, 1)
+  }
+
+  test("highest visible trees from example") {
     val actual = highestTrees(input)
     assertEquals(actual, 8)
   }

@@ -15,7 +15,8 @@ object Day08 extends IOApp.Simple {
         .map(_.toList.map(_.asDigit).toList)
         .compile
         .toList
-        .map(visibleTrees)
+//        .map(visibleTrees) // part 1
+        .map(highestTrees)
 
     program
       .map {
@@ -28,9 +29,9 @@ object Day08 extends IOApp.Simple {
   def visibleInnerTrees(row: List[Int]): List[Boolean] = {
     @tailrec
     def go(
-            visibleTrees: List[Boolean],
-            index: Int
-          ): List[Boolean] = {
+        visibleTrees: List[Boolean],
+        index: Int
+    ): List[Boolean] = {
       if (index == row.length) {
         visibleTrees
       } else {
@@ -48,7 +49,10 @@ object Day08 extends IOApp.Simple {
     input.map(visibleInnerTrees)
   }
 
-  def combineTrees(left: List[List[Boolean]], right: List[List[Boolean]]): List[List[Boolean]] = left
+  def combineTrees(
+      left: List[List[Boolean]],
+      right: List[List[Boolean]]
+  ): List[List[Boolean]] = left
     .zip(right)
     .map { case (x, y) =>
       x.zip(y)
@@ -69,7 +73,7 @@ object Day08 extends IOApp.Simple {
         if (trees.isEmpty) {
           lowerTrees
         } else {
-          if(currentTree <= trees.last) {
+          if (currentTree <= trees.last) {
             lowerTrees + 1
           } else {
             go(lowerTrees + 1, trees.dropRight(1))
@@ -85,32 +89,21 @@ object Day08 extends IOApp.Simple {
   def highestTrees(input: List[List[Int]]): Int = {
     val grid = input.map(_.toArray).toArray
 
-    val height = input.length
-    val width = input.head.length
+    // ignore the edges
+    val height = input.length - 1
+    val width = input.head.length - 1
 
     var highestTree = 0
 
-    for (i <- 1 until width - 1) {
-      for (j <- 1 until height - 1) {
+    for (i <- 1 until width) {
+      for (j <- 1 until height) {
         val row = grid(i)
         val column = grid.transpose.apply(j)
-        // count the number of taller trees going up
 
-        println(s"i = ${i}")
-        println(s"j = ${j}")
-        
-        println(s"row = ${row.mkString("Array(", ", ", ")")}")
-        println(s"column = ${column.mkString("Array(", ", ", ")")}")
-
-        val up = viewingDistance(j, column)
-        val down = viewingDistance(j, column.reverse)
-        val left = viewingDistance(i, row)
-        val right = viewingDistance(i, row.reverse)
-
-        println(s"up = ${up}")
-        println(s"down = ${down}")
-        println(s"left = ${left}")
-        println(s"down = ${down}")
+        val up = viewingDistance(i, column)
+        val down = viewingDistance(height - i, column.reverse)
+        val left = viewingDistance(j, row)
+        val right = viewingDistance(width - j, row.reverse)
 
         val calcHeights = up * down * left * right
         highestTree = highestTree.max(calcHeights)
@@ -124,7 +117,9 @@ object Day08 extends IOApp.Simple {
     val leftToRight = innerRow(trees(input))
     val rightToLeft = innerRow(trees(input.map(_.reverse)).map(_.reverse))
     val topToBottom = innerRow(trees(input.transpose))
-    val bottomToTop = innerRow(trees(input.transpose.map(_.reverse)).map(_.reverse))
+    val bottomToTop = innerRow(
+      trees(input.transpose.map(_.reverse)).map(_.reverse)
+    )
 
     val columns = combineTrees(topToBottom, bottomToTop)
 
