@@ -10,7 +10,11 @@ object Utils {
   implicit class ArrayOps[A](val array: Array[Array[A]]) {
     def prettyPrint(): Unit = array.map(_.mkString(" ")).foreach(println)
 
+    def at(i: Int, j: Int): Option[A] = {
+      array.lift(i).flatMap(_.lift(j))
+    }
   }
+
   implicit class MatrixOps[A](val array: Seq[Seq[A]]) {
     def at(i: Int, j: Int): Option[A] = {
       array.lift(i).flatMap(_.lift(j))
