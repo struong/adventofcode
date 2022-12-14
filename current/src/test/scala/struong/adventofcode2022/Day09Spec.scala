@@ -1,12 +1,11 @@
 package struong.adventofcode2022
 
+import fs2.text
 import munit.CatsEffectSuite
-import struong.adventofcode2022.Utils.ArrayOps
-
-import scala.collection.mutable
-import scala.collection.mutable.Queue
 
 class Day09Spec extends CatsEffectSuite {
+  val grid: Array[Array[Int]] = Array.fill(10, 10)(0)
+
   val input: String =
     """
       |R 4
@@ -19,64 +18,66 @@ class Day09Spec extends CatsEffectSuite {
       |R 2
       |""".stripMargin
 
-  test("parse the input to a grid") {
-    val grid = Array.fill(10, 10)(0)
+  test("parse input") {
+    val oneInput = "R 4"
+    assertEquals(DirectionCommand(oneInput), Right(4))
+  }
 
-    // clockwise direction
-    val offsets = Vector(
-      (0, 1),
-      (1, 1),
-      (1, 0),
-      (-1, 1),
-      (0, -1),
-      (-1, -1),
-      (-1, 0),
-      (1, -1)
+  test("all the inputs") {
+    val parse = fs2.Stream
+      .emit(input)
+      .through(text.lines)
+      .filter(_.trim.nonEmpty)
+      .map(DirectionCommand.apply)
+
+    val expected = List(
+      Right(4),
+      Up(4),
+      Left(3),
+      Down(1),
+      Right(4),
+      Down(1),
+      Left(5),
+      Right(2)
     )
 
-    val endX = 10
-    val endY = 10
+    assertEquals(parse.compile.toList, expected)
+  }
 
-    val targetX = 3
-    val targetY = 5
 
-    def breadthFirstSearch(
-        input: Array[Array[Int]]
-    ): Option[List[(Int, Int)]] = {
-      val queue = mutable.Queue[List[(Int, Int)]]()
-      queue.enqueue(List(0 -> 0))
+  test("BFS when start and target are the same") {
+    val target = (3, 5)
+    assertEquals(Day09.breadthFirstSearch(grid, target, target), List.empty)
+  }
 
-      var solution: Option[List[(Int, Int)]] = None
-      var visited = Set[(Int, Int)](0 -> 0)
+  test("R4") {
+    val target = (4, 0)
 
-      while (queue.nonEmpty && solution.isEmpty) {
-        val steps @ (x, y) :: _ = queue.dequeue
-        for ((dx, dy) <- offsets) {
-          val newX = x + dx
-          val newY = y + dy
+    val expected = List((4, 0), (3, 0), (2, 0), (1, 0), (0, 0))
+    assertEquals(Day09.breadthFirstSearch(grid, (0, 0), target), expected)
+  }
 
-          // if target or end has been reached
-          if (
-            (newX == targetX && newY == targetY) || (newX == endX && newY == endY)
-          ) {
-            solution = Some((newX -> newY) :: steps)
-          }
+  test("example") {
+    val commands: List[DirectionCommand] = List(
+      Right(4),
+      Up(4)
+//      Left(3),
+//      Down(1),
+//      Right(4),
+//      Down(1),
+//      Left(5),
+//      Right(2)
+    )
 
-          // if it's valid and not been visited
-          if (input.at(newX, newY).isDefined && !visited(newX, newY)) {
-            // add location to the queue
-            visited = visited + (newX -> newY)
-            queue.enqueue((newX -> newY) :: steps)
-          }
-        }
-      }
+    val actual = commands.foldLeft(List(0 -> 0)) { case (visited, command) =>
+      val current = visited.head
+      println(s"current = ${current}")
+      val target = DirectionCommand.to(current, command)
+      println(s"target = ${target}")
+      println(s"Day09.breadthFirstSearch(grid, target) = ${Day09.breadthFirstSearch(grid, current, target)}")
 
-      solution
+      Day09.breadthFirstSearch(grid, current, target) ++ visited
     }
-
-    println(breadthFirstSearch(grid))
-
-    val set = Set(1, 2, 3)
-    println(!set(5))
+    println(s"actual = ${actual.sorted.distinct}")
   }
 }
