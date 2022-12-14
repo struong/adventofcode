@@ -2,6 +2,9 @@ package struong.adventofcode2022
 
 import fs2.text
 import munit.CatsEffectSuite
+import struong.adventofcode2022.Day09.{isClose, nextClosestPoint, uniquePosition9, uniquePositions, walk}
+
+import scala.annotation.tailrec
 
 class Day09Spec extends CatsEffectSuite {
   val grid: Array[Array[Int]] = Array.fill(10, 10)(0)
@@ -44,40 +47,102 @@ class Day09Spec extends CatsEffectSuite {
     assertEquals(parse.compile.toList, expected)
   }
 
-
-  test("BFS when start and target are the same") {
-    val target = (3, 5)
-    assertEquals(Day09.breadthFirstSearch(grid, target, target), List.empty)
+  test("next to the closest same point") {
+    val actual = nextClosestPoint(Point(2, 0), Point(2, 0))
+    assertEquals(actual, Point(2, 0))
   }
 
-  test("R4") {
-    val target = (4, 0)
-
-    val expected = List((4, 0), (3, 0), (2, 0), (1, 0), (0, 0))
-    assertEquals(Day09.breadthFirstSearch(grid, (0, 0), target), expected)
+  test("next to the closest right point") {
+    val actual = nextClosestPoint(Point(0, 0), Point(2, 0))
+    assertEquals(actual, Point(1, 0))
   }
 
-  test("example") {
-    val commands: List[DirectionCommand] = List(
-      Right(4),
-      Up(4)
-//      Left(3),
-//      Down(1),
-//      Right(4),
-//      Down(1),
-//      Left(5),
-//      Right(2)
+  test("next to the closest left point") {
+    val actual = nextClosestPoint(Point(3, 0), Point(0, 0))
+    assertEquals(actual, Point(2, 0))
+  }
+
+  test("next to the closest point above") {
+    val actual = nextClosestPoint(Point(0, 0), Point(0, 5))
+    assertEquals(actual, Point(0, 1))
+  }
+
+  test("next to the closest point below") {
+    val actual = nextClosestPoint(Point(0, 5), Point(0, 0))
+    assertEquals(actual, Point(0, 4))
+  }
+
+  test("next to the closest diagonal point") {
+    val actual = nextClosestPoint(Point(0, 0), Point(2, 2))
+    assertEquals(actual, Point(1, 1))
+  }
+
+  test("is close or touching") {
+    assertEquals(isClose(Point(0, 0), Point(0, 1)), true)
+    assertEquals(isClose(Point(0, 0), Point(0, 0)), true)
+    assertEquals(isClose(Point(0, 0), Point(1, 1)), true)
+
+    assertEquals(isClose(Point(0, 0), Point(0, 2)), false)
+    assertEquals(isClose(Point(0, 0), Point(2, 2)), false)
+  }
+
+  test("walk along a horizontal path") {
+    val start = Point(0, 0)
+    val target = Point(0, 4)
+
+    val actual = walk(start, target)
+
+    val expected = List(
+      Point(0, 1),
+      Point(0, 2),
+      Point(0, 3)
     )
 
-    val actual = commands.foldLeft(List(0 -> 0)) { case (visited, command) =>
-      val current = visited.head
-      println(s"current = ${current}")
-      val target = DirectionCommand.to(current, command)
-      println(s"target = ${target}")
-      println(s"Day09.breadthFirstSearch(grid, target) = ${Day09.breadthFirstSearch(grid, current, target)}")
+    assertEquals(actual, expected)
+  }
 
-      Day09.breadthFirstSearch(grid, current, target) ++ visited
-    }
-    println(s"actual = ${actual.sorted.distinct}")
+  test("walk along a diagonal path") {
+    val start = Point(0, 0)
+    val target = Point(4, 4)
+
+    val actual = walk(start, target)
+
+    val expected = List(
+      Point(1, 1),
+      Point(2, 2),
+      Point(3, 3)
+    )
+
+    assertEquals(actual, expected)
+  }
+
+  test("two knots example") {
+    val parsedInput: List[DirectionCommand] = List(
+      Right(4),
+      Up(4),
+      Left(3),
+      Down(1),
+      Right(4),
+      Down(1),
+      Left(5),
+      Right(2)
+    )
+
+    assertEquals(uniquePositions(Point(0, 0), parsedInput), 13)
+  }
+
+  test("9 knots example") {
+    val input9 = List(
+      Right(5),
+      Up(8),
+      Left(8),
+      Down(3),
+      Right(17),
+      Down(10),
+      Left(25),
+      Up(20)
+    )
+
+    assertEquals(uniquePosition9(Point(0, 0), input9), 36)
   }
 }

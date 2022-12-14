@@ -1,11 +1,8 @@
 package struong.adventofcode2022
 
 import cats.effect.{IO, IOApp}
-import fs2.Pipe
-import struong.adventofcode2022.Utils.ArrayOps
 
 import scala.annotation.tailrec
-import scala.collection.mutable
 
 object Day09 extends IOApp.Simple {
   override def run: IO[Unit] = {
@@ -15,72 +12,110 @@ object Day09 extends IOApp.Simple {
       Utils
         .read[IO](inputFile)
         .filter(_.trim.nonEmpty)
-        .map(_.toList.map(_.asDigit).toList)
+        .map(DirectionCommand.apply)
         .compile
         .toList
-    //        .map(visibleTrees) // part 1
+        .map(commands => uniquePosition9(Point(0, 0), commands))
 
     program
       .map(println)
   }
 
   // clockwise direction
-  private val offsets: Vector[(Int, Int)] = Vector(
-    (0, 1),
-    (1, 1),
-    (1, 0),
-    (1, -1),
-    (0, -1),
-    (-1, -1),
-    (-1, 0),
-    (-1, 1)
+  val offsets: Vector[Point] = Vector(
+    Point(0, 1),
+    Point(1, 1),
+    Point(1, 0),
+    Point(1, -1),
+    Point(0, -1),
+    Point(-1, -1),
+    Point(-1, 0),
+    Point(-1, 1)
   )
 
-  def breadthFirstSearch(
-      input: Array[Array[Int]],
-      start: (Int, Int),
-      target: (Int, Int)
-  ): List[(Int, Int)] = {
-    if (start == target) {
-      List.empty
-    } else {
-      val queue = mutable.Queue[List[(Int, Int)]]()
-      queue.enqueue(List(start._1 -> start._2))
+  def uniquePosition9(start: Point, directions: List[DirectionCommand]): Int = {
+    @tailrec
+    def path(head: Point, tails: List[Point], directions: List[DirectionCommand], visited: Set[Point]): Set[Point] = {
+      if (directions.isEmpty) {
+        visited
+      } else {
+        val target = DirectionCommand.to(head, directions.head)
 
-      var solution = List.empty[(Int, Int)]
+        var ninePath = Set.empty[Point]
 
-      // So we do not backtrack
-      var visited = Set[(Int, Int)](0 -> 0)
+        val rope = tails.zipWithIndex.foldLeft((List.empty[Point])) { case (accum, (knot, index)) =>
+          val prevKnot = accum.lift(index - 1).getOrElse(target)
 
-      while (queue.nonEmpty && solution.isEmpty) {
-        val steps @ (x, y) :: _ = queue.dequeue
-        val (targetX, targetY) = (target._1, target._2)
+          if (isClose(knot, prevKnot)) {
+            accum :+ knot
+          } else {
+            val pathWalked = walk(knot, prevKnot)
 
-        val endX = input.head.length
-        val endY = input.length
+            if (index == 8) {
+              ninePath = pathWalked.toSet
+            }
 
-        for ((dx, dy) <- offsets) {
-          val newX = x + dx
-          val newY = y + dy
-
-          // if target or end has been reached
-          if (
-            (newX == targetX && newY == targetY)
-            || (newX > endX && newY > endY)
-          ) {
-            solution = (newX -> newY) :: steps
-          }
-
-          // if it's valid and not been visited
-          if (input.at(newX, newY).isDefined && !visited(newX, newY)) {
-            // add location to the queue
-            visited = visited + (newX -> newY)
-            queue.enqueue((newX -> newY) :: steps)
+            accum :+ pathWalked.last
           }
         }
+
+        path(target, rope, directions.drop(1), visited ++ ninePath)
+      }
+    }
+
+    path(start, List.fill(9)(Point(0, 0)), directions, Set(start)).size
+  }
+
+  def uniquePositions(start: Point, directions: List[DirectionCommand]): Int = {
+    @tailrec
+    def path(head: Point, tail: Point, directions: List[DirectionCommand], visited: Set[Point]): Set[Point] = {
+      if (directions.isEmpty) {
+        visited
+      } else {
+        val target = DirectionCommand.to(head, directions.head)
+        val pathWalked = walk(tail, target)
+        if (pathWalked.isEmpty) {
+          path(target, tail, directions.drop(1), visited)
+        } else {
+          path(target, pathWalked.last, directions.drop(1), pathWalked.toSet ++ visited)
+        }
+      }
+    }
+
+    path(start, start, directions, Set(start)).size
+  }
+
+  @tailrec
+  def walk(current: Point, target: Point, visited: List[Point] = List.empty): List[Point] = {
+    if (current == target || isClose(current, target)) {
+      visited
+    } else {
+      val next = nextClosestPoint(current, target)
+      walk(next, target, visited :+ next)
+    }
+  }
+
+  def isClose(start: Point, target: Point): Boolean = {
+    val isTouching = offsets.exists(offset => start + offset == target)
+    isTouching || (start == target)
+  }
+
+  def nextClosestPoint(start: Point, target: Point): Point = {
+    if (start == target) {
+      start
+    } else {
+      // distance between (start + offset) to point
+      val distances = offsets.map { case (offset) =>
+        val dPoint = start + offset
+        val dX = math.pow(dPoint.x - target.x, 2)
+        val dY = math.pow(dPoint.y - target.y, 2)
+        math.sqrt(dX + dY)
       }
 
-      solution
+      // Return the offset that matches the lowest distance
+      val closestOffset = offsets(distances.indexOf(distances.min))
+      // return the start point by that offset
+      start + closestOffset
     }
   }
 }
@@ -97,16 +132,16 @@ final case class Down(steps: Int) extends DirectionCommand
 
 object DirectionCommand {
   def to(
-      currentPos: (Int, Int),
-      directionCommand: DirectionCommand
-  ): (Int, Int) = {
-    val (x, y) = (currentPos._1, currentPos._2)
+          currentPos: Point,
+          directionCommand: DirectionCommand
+        ): Point = {
+    val (x, y) = (currentPos.x, currentPos.y)
 
     directionCommand match {
-      case Right(steps) => (x + steps, y)
-      case Left(steps)  => (x - steps, y)
-      case Up(steps)    => (x, y + steps)
-      case Down(steps)  => (x, y - steps)
+      case Right(steps) => Point(x + steps, y)
+      case Left(steps) => Point(x - steps, y)
+      case Up(steps) => Point(x, y + steps)
+      case Down(steps) => Point(x, y - steps)
     }
   }
 
@@ -119,7 +154,7 @@ object DirectionCommand {
       case "L" => Left(steps)
       case "U" => Up(steps)
       case "D" => Down(steps)
-      case _   => throw new RuntimeException(s"Invalid direction $direction")
+      case _ => throw new RuntimeException(s"Invalid direction $direction")
     }
   }
 }
