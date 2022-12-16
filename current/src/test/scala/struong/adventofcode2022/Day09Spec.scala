@@ -2,9 +2,7 @@ package struong.adventofcode2022
 
 import fs2.text
 import munit.CatsEffectSuite
-import struong.adventofcode2022.Day09.{isClose, nextClosestPoint, uniquePosition9, uniquePositions, walk}
-
-import scala.annotation.tailrec
+import struong.adventofcode2022.Day09._
 
 class Day09Spec extends CatsEffectSuite {
   val grid: Array[Array[Int]] = Array.fill(10, 10)(0)
