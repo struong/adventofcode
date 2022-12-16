@@ -158,11 +158,11 @@ class Day10Spec extends CatsEffectSuite {
         |""".stripMargin
 
     val program = fs2.Stream
-        .emit(programInput)
-        .covary[IO]
-        .through(text.lines)
-        .filter(_.trim.nonEmpty)
-        .through(strength)
+      .emit(programInput)
+      .covary[IO]
+      .through(text.lines)
+      .filter(_.trim.nonEmpty)
+      .through(strength)
 
     assertIO(program.compile.toList, List(13140))
   }

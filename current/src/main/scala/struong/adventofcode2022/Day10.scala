@@ -1,6 +1,8 @@
 package struong.adventofcode2022
 
+import cats.Applicative
 import cats.effect.{IO, IOApp}
+import cats.implicits.catsSyntaxApplicativeId
 import fs2.Pipe
 
 object Day10 extends IOApp.Simple {
@@ -19,23 +21,36 @@ object Day10 extends IOApp.Simple {
       .drain
   }
 
-  def strength[F[_]]: Pipe[F, String, Int] = lines =>
+  def strength[F[_]: Applicative]: Pipe[F, String, Int] = lines =>
     lines
-      .fold(Signal(0, 1, 0)) { (signal, line) =>
+      .fold(Signal(0, 1, 0, "")) { (signal, line) =>
         line.split(" ") match {
           case Array("noop") => signal.noop
           case Array("addx", op) => signal.add(op)
         }
       }
+      .evalTap { x =>
+        println(x.crt.grouped(40).mkString("\n")).pure[F]
+      }
       .map(_.strength)
 
-  final case class Signal(cycle: Int, register: Int, strength: Int) {
+
+  final case class Signal(cycle: Int, register: Int, strength: Int, crt: String) {
+
     private def checkStrength(cycle: Int): Signal = {
+      val spritePos = Range.inclusive(register, register + 2).toList
+      val display = if (spritePos.contains(cycle % 40)) {
+        "#"
+      } else
+        "."
+
+      val crtSignal = copy(crt = crt ++ display)
+
       val cycles = List(20, 60, 100, 140, 180, 220)
       if (cycles.contains(cycle)) {
-        copy(strength = strength + (cycle * register))
+        crtSignal.copy(strength = strength + (cycle * register))
       } else {
-        this
+        crtSignal
       }
     }
 
