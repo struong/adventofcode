@@ -42,7 +42,7 @@ class Day11Spec extends CatsEffectSuite {
       .through(text.lines)
       .filter(_.nonEmpty)
       .chunkN(6)
-      .through(monkeyGames(20))
+      .through(monkeyGames(10000))
       .map {
         _.toList
           .map(x => println(s"id: ${x._2.id}: ${x._2.inspected}"))

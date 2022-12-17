@@ -3,8 +3,6 @@ package struong.adventofcode2022
 import cats.effect.{IO, IOApp}
 import fs2.{Chunk, Pipe}
 
-import scala.annotation.tailrec
-
 object Day11 extends IOApp.Simple {
   override def run: IO[Unit] = {
     val inputFile = "testdata/Day11.txt"
@@ -45,10 +43,10 @@ object Day11 extends IOApp.Simple {
   }
 
   final case class Op(operator: String) {
-    def worryLevel(item: Int): Int = {
+    def worryLevel(item: Long): Long = {
       // e.g. Op(old,+,3)
       val operation = operator.split(',')
-      val operand = operation(2).toIntOption.getOrElse(item)
+      val operand = operation(2).toLongOption.getOrElse(item)
       operation(1) match {
         case "+" => item + operand
         case "*" => item * operand
@@ -59,17 +57,19 @@ object Day11 extends IOApp.Simple {
 
   final case class Monkey(
       id: Int,
-      items: List[Int],
+      items: List[Long],
       op: Op,
       divisible: Int,
       trueDst: Int,
       falseDst: Int,
-      inspected: BigInt
+      inspected: Long
   ) {
-    def throwItems: (Monkey, List[(Int, Int)]) = {
+    def throwItems(lcm: Long): (Monkey, List[(Long, Int)]) = {
       val thrownItems = items.map { item =>
         val worryLevel = op.worryLevel(item)
-        val boredValue = math.floor(worryLevel / 3).toInt
+//        part 1
+//        val boredValue = math.floor(worryLevel / 3).toInt
+        val boredValue = worryLevel % lcm
 
         val dst =
           if (boredValue % divisible == 0)
@@ -90,7 +90,7 @@ object Day11 extends IOApp.Simple {
   object Monkey {
     def apply(input: Chunk[String]): Monkey = {
       val id = input(0).split(" ")(1).dropRight(1).toInt
-      val items = input(1).split(":")(1).split(',').map(_.trim.toInt).toList
+      val items = input(1).split(":")(1).split(',').map(_.trim.toLong).toList
       val op =
         input(2).split("=")(1).split(' ').filter(_.nonEmpty).mkString(",")
       val divisible = input(3).split("by ")(1).toInt
@@ -111,7 +111,7 @@ object Day11 extends IOApp.Simple {
 
   def updateState(
       currentState: Map[Int, Monkey],
-      thrownItems: List[(Int, Int)]
+      thrownItems: List[(Long, Int)]
   ): Map[Int, Monkey] = {
     thrownItems.foldLeft(currentState) {
       case (currentState, (thrownItem, id)) =>
@@ -127,10 +127,12 @@ object Day11 extends IOApp.Simple {
   }
 
   def round(state: Map[Int, Monkey]): Map[Int, Monkey] = {
+
+    val lcm = state.toList.map(_._2.divisible).product
     val monkeys = state.keys.toList.sorted
     monkeys.foldLeft(state) { case (currentState, id) =>
       val currentMonkey = currentState(id)
-      val (updatedMonkey, thrownItems) = currentMonkey.throwItems
+      val (updatedMonkey, thrownItems) = currentMonkey.throwItems(lcm)
       val throwingMonkeyState = currentState.updated(id, updatedMonkey)
 
       updateState(throwingMonkeyState, thrownItems)
