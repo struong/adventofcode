@@ -13,6 +13,10 @@ object Utils {
     def at(i: Int, j: Int): Option[A] = {
       array.lift(i).flatMap(_.lift(j))
     }
+
+    def at(p: Point): Option[A] = {
+      array.lift(p.y).flatMap(_.lift(p.x))
+    }
   }
 
   implicit class MatrixOps[A](val array: Seq[Seq[A]]) {
